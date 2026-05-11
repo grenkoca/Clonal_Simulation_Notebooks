@@ -723,7 +723,7 @@ class ClonalSim:
                     self.next_lineage_id += 1
                     self.num_new_variants += 1
 
-                    if meth_matrix_now is not None:
+                    if meth_matrix_now is not None and i < len(meth_matrix_now):
                         parent_methylation_row = meth_matrix_now[i, :]
                         # Single founding cell: draw diploid genotype from HWE giving
                         # {0.0, 0.5, 1.0} for {UU, MU, MM}.
@@ -864,6 +864,13 @@ class ClonalSim:
         else:
             mrow = np.asarray(methylation_row, dtype=float).reshape(1, -1)
             self.methylation_updates_history.append(mrow)
+            # Keep the cached drifted matrix in sync so the new lineage is
+            # immediately visible to get_bulk_methylation and the mutation-
+            # spawning loop without needing a full history rebuild.
+            if hasattr(self, '_current_drifted_matrix') and self._current_drifted_matrix is not None:
+                self._current_drifted_matrix = np.vstack(
+                    [self._current_drifted_matrix, mrow.astype(self._current_drifted_matrix.dtype)]
+                )
 
         return new_id
 
